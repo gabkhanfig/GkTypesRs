@@ -1,13 +1,19 @@
-use std::{alloc::Layout, mem::{size_of, align_of}};
+use std::{alloc::Layout, mem::{size_of, align_of}, sync::Arc};
 
 #[derive(Debug)]
 pub enum AllocErr {
     OutOfMemory
 }
 
-/* Basically a wrapper around Box<dyn AllocatorTrait> with helper methods. */
+/// Basically a wrapper around Arc<Box<dyn AllocatorTrait>> with helper methods.
+/// ```
+/// # use gk_types_rs::allocator::allocator::Allocator;
+/// # use std::mem::size_of;
+/// assert_eq!(size_of::<Allocator>(), 8);
+/// ```
+#[derive(Clone)]
 pub struct Allocator {
-    inner: Box<dyn AllocatorTrait>
+    inner: Arc<Box<dyn AllocatorTrait>>
 }
 
 impl Allocator {
@@ -127,7 +133,7 @@ pub trait AllocatorTrait {
 
     fn new() -> Allocator
     where Self: Sized {
-        return Allocator { inner: Self::new_impl() }
+        return Allocator { inner: Arc::new(Self::new_impl()) }
     }
 
     fn new_impl() -> Box<dyn AllocatorTrait>
