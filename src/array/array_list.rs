@@ -836,7 +836,8 @@ impl<T> ArrayList<T> {
     /// array_list.push(10);
     /// array_list.push(11);
     /// array_list.push(12);
-    /// assert_eq!(array_list.swap_remove(1), 11);
+    /// let removed = array_list.swap_remove(1);
+    /// assert_eq!(removed, 11);
     /// assert_eq!(array_list[0], 10);
     /// assert_eq!(array_list[1], 12);
     /// ```
