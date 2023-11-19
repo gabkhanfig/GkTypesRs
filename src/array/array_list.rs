@@ -573,7 +573,9 @@ impl<T> ArrayList<T> {
     }
 
     /// Removes an element at a specific index, shifting over the elements after it downwards.
+    /// 
     /// Maintains order but not indices. 
+    /// 
     /// It is reasonable to think that any ArrayList that's having elements removed frequently, will also
     /// have elements pushed. Therefore, not reallocating is ideal. The programmer can shrink the array naturally
     /// by using `shrink_to_fit()`.
@@ -795,10 +797,6 @@ impl<T> ArrayList<T> {
         }   
     }
 
-    pub fn truncate(&mut self, len: usize) {
-        todo!()
-    }
-
     pub fn as_slice(&self) -> &[T] {
         return unsafe { std::slice::from_raw_parts(self.as_ptr(), self.len()) };
     }
@@ -816,7 +814,70 @@ impl<T> ArrayList<T> {
         self.length.set_len(new_length);
     }
 
+    /// Removes an element at a specific index and returns it. The last element of the ArrayList will take it's place if 
+    /// if `index` is not the last element, of the ArrayList in it's place. Order is most likely not going to be maintained.
+    /// 
+    /// `swap_remove()` is more performant than `remove()` when the ArrayList has more than 1 element after `index`.
+    /// 
+    /// It is reasonable to think that any ArrayList that's having elements removed frequently, will also
+    /// have elements pushed. Therefore, not reallocating is ideal. The programmer can shrink the array naturally
+    /// by using `shrink_to_fit()`.
+    /// 
+    /// # Panics 
+    /// 
+    /// If `index` greater than or equal to `len()`
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// # use gk_types_rs::array::array_list::ArrayList;
+    /// # use gk_types_rs::allocator::heap_allocator::global_heap_allocator;
+    /// let mut array_list: ArrayList<u32> = ArrayList::new(global_heap_allocator());
+    /// array_list.push(10);
+    /// array_list.push(11);
+    /// array_list.push(12);
+    /// assert_eq!(array_list.swap_remove(1), 11);
+    /// assert_eq!(array_list[0], 10);
+    /// assert_eq!(array_list[1], 12);
+    /// ```
+    /// `index` must be in range
+    /// ``` should_panic
+    /// # use gk_types_rs::array::array_list::ArrayList;
+    /// # use gk_types_rs::allocator::heap_allocator::global_heap_allocator;
+    /// let mut array_list: ArrayList<u32> = ArrayList::new(global_heap_allocator());
+    /// array_list.push(10);
+    /// array_list.push(11);
+    /// array_list.push(12);
+    /// // Will panic because index 3 is out of range
+    /// array_list.swap_remove(3);
+    /// ```
     pub fn swap_remove(&mut self, index: usize) -> T {
+        let length = self.len();
+        assert!(index < length);
+        let buffer = self.as_mut_ptr();
+        let is_last_element = index == (length - 1);
+        
+        let temp = unsafe {
+            buffer.offset(index as isize).read()
+        };
+        
+        if !is_last_element {
+            unsafe {
+                let move_to = &mut *buffer.offset(index as isize);
+                let move_from = &mut *buffer.offset(length as isize - 1);
+                std::mem::swap(move_to, move_from);
+                // for i in index as isize..(length - 1) as isize {
+                //     let move_to = &mut *buffer.offset(i);
+                //     let move_from = &mut *buffer.offset(i + 1);
+                //     std::mem::swap(move_to, move_from);
+                // }
+            }
+        }
+        self.length.set_len(length - 1);
+        return temp;     
+    }
+
+    pub fn truncate(&mut self, len: usize) {
         todo!()
     }
 
